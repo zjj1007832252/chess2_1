@@ -6,8 +6,11 @@
 struct Move {
     int fromRow, fromCol;
     int toRow, toCol;
-    Move() : fromRow(0), fromCol(0), toRow(0), toCol(0) {}
+    Move() : fromRow(-1), fromCol(-1), toRow(-1), toCol(-1) {}
     Move(int fr, int fc, int tr, int tc) : fromRow(fr), fromCol(fc), toRow(tr), toCol(tc) {}
+    bool isValid() const {
+        return fromRow >= 0 && fromCol >= 0 && toRow >= 0 && toCol >= 0;
+    }
     bool operator==(const Move& o) const {
         return fromRow==o.fromRow && fromCol==o.fromCol && toRow==o.toRow && toCol==o.toCol;
     }

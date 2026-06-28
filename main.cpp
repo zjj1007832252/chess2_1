@@ -2,8 +2,6 @@
 #include <QApplication>
 #include <QFile>
 #include <QTextStream>
-#include <windows.h>
-#include <stdlib.h>
 
 void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
     Q_UNUSED(context);
@@ -23,10 +21,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
     log.close();
 }
 
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-    int argc = __argc;
-    char **argv = __argv;
-
+int main(int argc, char** argv) {
     qInstallMessageHandler(messageHandler);
 
     QApplication app(argc, argv);

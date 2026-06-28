@@ -1,6 +1,5 @@
 #pragma once
 #include <QString>
-#include <QColor>
 
 // 棋子类型枚举
 enum class PieceType {
@@ -38,7 +37,6 @@ public:
     // 获取棋子基础价值
     int getBaseValue() const;
 
-    static QColor getColorBrush(PieceColor c);
     static QString getPieceKey(PieceType t, PieceColor c);
 
 private:

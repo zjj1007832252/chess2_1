@@ -2,8 +2,6 @@
 #include <QSet>
 #include <algorithm>
 
-using namespace std;
-
 ChessGame::ChessGame()
     : currentTurn_(PieceColor::Red), winner_(PieceColor::None), gameOver_(false) {}
 
@@ -378,6 +376,14 @@ bool ChessGame::wouldBeInCheckAfterMove(const Move& move, PieceColor color) cons
     tempBoard.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
     QPoint genPos = findGeneral(tempBoard, color);
     if (genPos.x() < 0) return true;
+
+    // 检查将帅是否面对面（飞将）
+    QPoint enemyGen = findGeneral(tempBoard, (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red);
+    if (enemyGen.x() >= 0 && genPos.y() == enemyGen.y()) {
+        if (countPiecesBetween(tempBoard, genPos.x(), genPos.y(), enemyGen.x(), enemyGen.y()) == 0) {
+            return true;
+        }
+    }
 
     PieceColor enemyColor = (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
     for (int r = 0; r < 10; ++r) {

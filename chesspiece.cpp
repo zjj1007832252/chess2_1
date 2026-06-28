@@ -67,10 +67,6 @@ int ChessPiece::getBaseValue() const {
     }
 }
 
-QColor ChessPiece::getColorBrush(PieceColor c) {
-    return c == PieceColor::Red ? QColor(200, 0, 0) : QColor(30, 30, 30);
-}
-
 QString ChessPiece::getPieceKey(PieceType t, PieceColor c) {
     QString col = (c == PieceColor::Red) ? "red" : "black";
     QString tp;

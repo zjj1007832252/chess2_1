@@ -8,14 +8,8 @@ Move AI::getBestMove(ChessGame& game) {
     auto moves = generateAllLegalMoves(game);
     if (moves.isEmpty()) return Move();
 
-    // 检查是否将军
     bool isCheck = game.isInCheck(aiColor_);
-
-    // 如果将军，减少搜索深度以加快响应
-    int effectiveDepth = depth_;
-    if (isCheck) {
-        effectiveDepth = qMax(1, depth_ - 1);  // 将军时减少一层深度
-    }
+    int effectiveDepth = isCheck ? qMax(1, depth_ - 1) : depth_;
 
     sortMoves(moves, game.getBoard());
 
@@ -23,12 +17,9 @@ Move AI::getBestMove(ChessGame& game) {
     int bestScore = INT_MIN;
 
     for (auto& move : moves) {
-        ChessGame savedGame = game;
-
         game.makeMove(move);
         int score = minimax(game, effectiveDepth - 1, INT_MIN, INT_MAX, false);
-
-        game = savedGame;
+        game.undoMove();
 
         if (score > bestScore) {
             bestScore = score;
@@ -55,10 +46,9 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
     if (maximizing) {
         int maxEval = INT_MIN;
         for (auto& move : moves) {
-            ChessGame savedGame = game;
             game.makeMove(move);
             int eval = minimax(game, depth - 1, alpha, beta, false);
-            game = savedGame;
+            game.undoMove();
             maxEval = qMax(maxEval, eval);
             alpha = qMax(alpha, eval);
             if (beta <= alpha) break;
@@ -67,10 +57,9 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
     } else {
         int minEval = INT_MAX;
         for (auto& move : moves) {
-            ChessGame savedGame = game;
             game.makeMove(move);
             int eval = minimax(game, depth - 1, alpha, beta, true);
-            game = savedGame;
+            game.undoMove();
             minEval = qMin(minEval, eval);
             beta = qMin(beta, eval);
             if (beta <= alpha) break;
@@ -91,23 +80,20 @@ QVector<Move> AI::generateAllLegalMoves(const ChessGame& game) const {
 
             auto pseudoMoves = game.getPseudoLegalMovesAt(board, r, c);
             for (auto& m : pseudoMoves) {
-                // 模拟走法，检查是否安全
                 ChessBoard tempBoard = board;
                 tempBoard.movePiece(m.fromRow, m.fromCol, m.toRow, m.toCol);
 
-                // 找到己方将/帅
                 QPoint myGen(-1, -1);
                 for (int rr = 0; rr < 10; ++rr) {
                     for (int cc = 0; cc < 9; ++cc) {
                         auto pp = tempBoard.getPiece(rr, cc);
                         if (pp.getType() == PieceType::General && pp.getColor() == turnColor) {
-                            myGen = QPoint(cc, rr);
+                            myGen = QPoint(rr, cc);
                         }
                     }
                 }
                 if (myGen.x() < 0) continue;
 
-                // 检查对方是否能攻击到将/帅
                 PieceColor enemyColor = (turnColor == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
                 bool safe = true;
                 for (int er = 0; er < 10 && safe; ++er) {
@@ -137,18 +123,15 @@ QVector<Move> AI::generateAllLegalMoves(const ChessGame& game) const {
 
 void AI::sortMoves(QVector<Move>& moves, const ChessBoard& board) const {
     std::sort(moves.begin(), moves.end(), [&](const Move& a, const Move& b) {
-        // 优先吃子
         int va = board.getPiece(a.toRow, a.toCol).getBaseValue();
         int vb = board.getPiece(b.toRow, b.toCol).getBaseValue();
 
-        // 如果是吃子，给额外加分
         if (va > 0) va += 1000;
         if (vb > 0) vb += 1000;
 
-        // 保护重要棋子
         auto pieceA = board.getPiece(a.fromRow, a.fromCol);
         auto pieceB = board.getPiece(b.fromRow, b.fromCol);
-        if (pieceA.getType() == PieceType::General) va -= 500;  // 不轻易移动将/帅
+        if (pieceA.getType() == PieceType::General) va -= 500;
         if (pieceB.getType() == PieceType::General) vb -= 500;
 
         return va > vb;

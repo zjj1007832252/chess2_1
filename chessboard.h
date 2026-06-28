@@ -44,9 +44,6 @@ public:
     // 恢复棋盘状态
     void restore(const ChessBoard& other);
 
-    // 打印棋盘（调试用）
-    void printBoard() const;
-
 private:
     QVector<QVector<ChessPiece>> board_; // board_[row][col]
 

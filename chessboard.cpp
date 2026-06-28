@@ -63,6 +63,7 @@ void ChessBoard::setPiece(int row, int col, const ChessPiece& piece) {
 }
 
 void ChessBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
+    if (!isValidPos(fromRow, fromCol) || !isValidPos(toRow, toCol)) return;
     board_[toRow][toCol] = board_[fromRow][fromCol];
     board_[fromRow][fromCol] = ChessPiece();
 }
@@ -90,7 +91,7 @@ QPoint ChessBoard::getRedGeneralPos() const {
         for (int c = 0; c < 9; ++c) {
             if (board_[r][c].getType() == PieceType::General &&
                 board_[r][c].getColor() == PieceColor::Red) {
-                return QPoint(c, r);
+                return QPoint(r, c);
             }
         }
     }
@@ -102,7 +103,7 @@ QPoint ChessBoard::getBlackGeneralPos() const {
         for (int c = 0; c < 9; ++c) {
             if (board_[r][c].getType() == PieceType::General &&
                 board_[r][c].getColor() == PieceColor::Black) {
-                return QPoint(c, r);
+                return QPoint(r, c);
             }
         }
     }
@@ -123,19 +124,6 @@ void ChessBoard::restore(const ChessBoard& other) {
     for (int r = 0; r < 10; ++r) {
         for (int c = 0; c < 9; ++c) {
             board_[r][c] = other.board_[r][c];
-        }
-    }
-}
-
-void ChessBoard::printBoard() const {
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            auto p = board_[r][c];
-            if (p.isEmpty()) {
-                // qDebug() << "  · ";
-            } else {
-                // qDebug() << p.getChar().toUtf8().constData();
-            }
         }
     }
 }

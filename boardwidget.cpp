@@ -327,7 +327,3 @@ void BoardWidget::updateLegalHints() {
     if (selected_.x() < 0) return;
     legalMoves_ = game_->getLegalMovesForPiece(selected_.x(), selected_.y());
 }
-
-void BoardWidget::mouseMoveEvent(QMouseEvent* event) {
-    Q_UNUSED(event);
-}

@@ -1,4 +1,4 @@
-﻿#include "mainwindow.h"
+#include "mainwindow.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -133,6 +133,7 @@ QWidget* MainWindow::createMainMenu() {
 void MainWindow::onLocalPlay() {
     mode_ = LocalTwoPlayer;
     game_->init();
+    delete ai_;
     ai_ = nullptr;
     stacked_->setCurrentIndex(1);
     boardWidget_->selected_ = {-1, -1};
@@ -255,7 +256,7 @@ void MainWindow::onAiPlay() {
 
     layout->addStretch();
     dialog->setLayout(layout);
-    dialog->open();
+    dialog->exec();
 }
 
 void MainWindow::startAiGame() {
@@ -416,14 +417,13 @@ void MainWindow::onAiThink() {
 
     aiThinking_ = true;
     statusLabel_->setText("AI思考中...");
-    QApplication::processEvents();
+    boardWidget_->setEnabled(false);
 
     Move aiMove = ai_->getBestMove(*game_);
     aiThinking_ = false;
+    boardWidget_->setEnabled(true);
 
-    if (aiMove.fromRow == 0 && aiMove.fromCol == 0 &&
-        aiMove.toRow == 0 && aiMove.toCol == 0) {
-        // 无合法走法
+    if (!aiMove.isValid()) {
         return;
     }
 
