@@ -34,7 +34,6 @@ public:
 
     QVector<Move> getAllLegalMoves() const;
     QVector<Move> getLegalMovesForPiece(int row, int col) const;
-    QVector<Move> getPseudoLegalMovesAt(const ChessBoard& b, int row, int col) const;
 
     bool makeMove(const Move& move);
     bool undoMove();
@@ -56,16 +55,9 @@ private:
     QVector<RecordedMove> moveHistory_;
 
     QVector<Move> getPseudoLegalMoves(int row, int col) const;
-    QVector<Move> getGeneralMoves(int row, int col) const;
-    QVector<Move> getAdvisorMoves(int row, int col) const;
-    QVector<Move> getElephantMoves(int row, int col) const;
-    QVector<Move> getHorseMoves(int row, int col) const;
-    QVector<Move> getChariotMoves(int row, int col) const;
-    QVector<Move> getCannonMoves(int row, int col) const;
-    QVector<Move> getSoldierMoves(int row, int col) const;
+    QVector<Move> getPseudoLegalMovesAt(const ChessBoard& b, int row, int col) const;
 
     bool isMoveSafe(const Move& move) const;
     bool wouldBeInCheckAfterMove(const Move& move, PieceColor color) const;
-    QPoint findGeneral(const ChessBoard& b, PieceColor color) const;
     int countPiecesBetween(const ChessBoard& b, int r1, int c1, int r2, int c2) const;
 };

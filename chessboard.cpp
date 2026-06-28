@@ -74,58 +74,20 @@ void ChessBoard::clearPiece(int row, int col) {
     }
 }
 
-void ChessBoard::swapPieces(int r1, int c1, int r2, int c2) {
-    if (isValidPos(r1, c1) && isValidPos(r2, c2)) {
-        ChessPiece tmp = board_[r1][c1];
-        board_[r1][c1] = board_[r2][c2];
-        board_[r2][c2] = tmp;
-    }
-}
-
 bool ChessBoard::isValidPos(int row, int col) {
     return row >= 0 && row < 10 && col >= 0 && col < 9;
 }
 
-QPoint ChessBoard::getRedGeneralPos() const {
+QPoint ChessBoard::findGeneral(PieceColor color) const {
     for (int r = 0; r < 10; ++r) {
         for (int c = 0; c < 9; ++c) {
             if (board_[r][c].getType() == PieceType::General &&
-                board_[r][c].getColor() == PieceColor::Red) {
+                board_[r][c].getColor() == color) {
                 return QPoint(r, c);
             }
         }
     }
     return QPoint(-1, -1);
-}
-
-QPoint ChessBoard::getBlackGeneralPos() const {
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            if (board_[r][c].getType() == PieceType::General &&
-                board_[r][c].getColor() == PieceColor::Black) {
-                return QPoint(r, c);
-            }
-        }
-    }
-    return QPoint(-1, -1);
-}
-
-ChessBoard ChessBoard::clone() const {
-    ChessBoard b;
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            b.board_[r][c] = board_[r][c];
-        }
-    }
-    return b;
-}
-
-void ChessBoard::restore(const ChessBoard& other) {
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            board_[r][c] = other.board_[r][c];
-        }
-    }
 }
 
 void ChessBoard::place(int row, int col, PieceType type, PieceColor color) {

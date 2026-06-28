@@ -32,8 +32,6 @@ public:
 
     // 获取棋子的汉字显示
     QString getChar() const;
-    // 获取棋子名称（用于AI评估）
-    QString getName() const;
     // 获取棋子基础价值
     int getBaseValue() const;
 

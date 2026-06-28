@@ -1,24 +1,4 @@
 #include "chesspiece.h"
-#include <QMap>
-
-static QMap<QString, PieceType> parseMap() {
-    QMap<QString, PieceType> m;
-    m["red_general"] = PieceType::General;
-    m["red_advisor"] = PieceType::Advisor;
-    m["red_elephant"] = PieceType::Elephant;
-    m["red_horse"] = PieceType::Horse;
-    m["red_chariot"] = PieceType::Chariot;
-    m["red_cannon"] = PieceType::Cannon;
-    m["red_soldier"] = PieceType::Soldier;
-    m["black_general"] = PieceType::General;
-    m["black_advisor"] = PieceType::Advisor;
-    m["black_elephant"] = PieceType::Elephant;
-    m["black_horse"] = PieceType::Horse;
-    m["black_chariot"] = PieceType::Chariot;
-    m["black_cannon"] = PieceType::Cannon;
-    m["black_soldier"] = PieceType::Soldier;
-    return m;
-}
 
 QString ChessPiece::getChar() const {
     switch (type) {
@@ -38,19 +18,6 @@ QString ChessPiece::getChar() const {
         return color == PieceColor::Red ? "兵" : "卒";
     default:
         return "";
-    }
-}
-
-QString ChessPiece::getName() const {
-    switch (type) {
-    case PieceType::General:  return "general";
-    case PieceType::Advisor:  return "advisor";
-    case PieceType::Elephant: return "elephant";
-    case PieceType::Horse:    return "horse";
-    case PieceType::Chariot:  return "chariot";
-    case PieceType::Cannon:   return "cannon";
-    case PieceType::Soldier:  return "soldier";
-    default: return "none";
     }
 }
 

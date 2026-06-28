@@ -7,7 +7,7 @@
 #include <QMessageBox>
 #include "chessgame.h"
 #include "boardwidget.h"
-#include "ai.h"
+#include "aiworker.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -23,6 +23,7 @@ private slots:
     void onUndo();
     void onExitToMenu();
     void onAiThink();
+    void onAiResult(const Move& move);
     void onMoveMade(const Move& move);
 
 private:
@@ -35,9 +36,8 @@ private:
     BoardWidget* boardWidget_;
     QStackedWidget* stacked_;
 
-    AI* ai_;
+    AIThread* aiThread_;
     PieceColor aiColor_;
-    bool aiThinking_;
     int aiDepth_;
 
     enum GameMode { MainMenu, LocalTwoPlayer, PlayerVsAI };

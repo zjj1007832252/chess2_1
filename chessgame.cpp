@@ -27,202 +27,7 @@ QVector<Move> ChessGame::getPseudoLegalMoves(int row, int col) const {
     ChessPiece piece = board_.getPiece(row, col);
     if (piece.isEmpty() || piece.getColor() != currentTurn_)
         return {};
-
-    QVector<Move> moves;
-    switch (piece.getType()) {
-    case PieceType::General:  moves = getGeneralMoves(row, col); break;
-    case PieceType::Advisor:  moves = getAdvisorMoves(row, col); break;
-    case PieceType::Elephant: moves = getElephantMoves(row, col); break;
-    case PieceType::Horse:    moves = getHorseMoves(row, col); break;
-    case PieceType::Chariot:  moves = getChariotMoves(row, col); break;
-    case PieceType::Cannon:   moves = getCannonMoves(row, col); break;
-    case PieceType::Soldier:  moves = getSoldierMoves(row, col); break;
-    default: break;
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getGeneralMoves(int row, int col) const {
-    QVector<Move> moves;
-    PieceColor color = board_.getPiece(row, col).getColor();
-    int cMin = 3, cMax = 5;
-    int rMin, rMax;
-    if (color == PieceColor::Red) { rMin = 7; rMax = 9; }
-    else { rMin = 0; rMax = 2; }
-
-    int dr[] = {-1, 1, 0, 0};
-    int dc[] = {0, 0, -1, 1};
-    for (int i = 0; i < 4; ++i) {
-        int nr = row + dr[i], nc = col + dc[i];
-        if (nr >= rMin && nr <= rMax && nc >= cMin && nc <= cMax) {
-            ChessPiece target = board_.getPiece(nr, nc);
-            if (!target.isEmpty() && target.getColor() == color) continue;
-            moves.append(Move(row, col, nr, nc));
-        }
-    }
-// flying general check
-    QPoint enemyGen = findGeneral(board_, (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red);
-    if (enemyGen.x() >= 0 && col == enemyGen.y()) {
-        if (countPiecesBetween(board_, row, col, enemyGen.x(), enemyGen.y()) == 0) {
-            moves.append(Move(row, col, enemyGen.x(), enemyGen.y()));
-        }
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getAdvisorMoves(int row, int col) const {
-    QVector<Move> moves;
-    PieceColor color = board_.getPiece(row, col).getColor();
-    int cMin = 3, cMax = 5;
-    int rMin, rMax;
-    if (color == PieceColor::Red) { rMin = 7; rMax = 9; }
-    else { rMin = 0; rMax = 2; }
-
-    int dr[] = {-1, -1, 1, 1};
-    int dc[] = {-1, 1, -1, 1};
-    for (int i = 0; i < 4; ++i) {
-        int nr = row + dr[i], nc = col + dc[i];
-        if (nr >= rMin && nr <= rMax && nc >= cMin && nc <= cMax) {
-            ChessPiece target = board_.getPiece(nr, nc);
-            if (!target.isEmpty() && target.getColor() == color) continue;
-            moves.append(Move(row, col, nr, nc));
-        }
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getElephantMoves(int row, int col) const {
-    QVector<Move> moves;
-    PieceColor color = board_.getPiece(row, col).getColor();
-    int rMin, rMax;
-    if (color == PieceColor::Red) { rMin = 5; rMax = 9; }
-    else { rMin = 0; rMax = 4; }
-
-    struct Dir { int dr, dc, br, bc; };
-    Dir dirs[] = {
-        {-2, -2, -1, -1}, {-2, 2, -1, 1},
-        {2, -2, 1, -1},   {2, 2, 1, 1}
-    };
-    for (auto& d : dirs) {
-        int nr = row + d.dr, nc = col + d.dc;
-        if (nr < rMin || nr > rMax || nc < 0 || nc > 8) continue;
-        if (!board_.getPiece(row + d.br, col + d.bc).isEmpty()) continue;
-        ChessPiece target = board_.getPiece(nr, nc);
-        if (!target.isEmpty() && target.getColor() == color) continue;
-        moves.append(Move(row, col, nr, nc));
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getHorseMoves(int row, int col) const {
-    QVector<Move> moves;
-    struct Dir { int dr, dc, lr, lc; };
-    Dir dirs[] = {
-        {-2, -1, -1, 0}, {-2, 1, -1, 0},
-        {2, -1, 1, 0},   {2, 1, 1, 0},
-        {-1, -2, 0, -1}, {1, -2, 0, -1},
-        {-1, 2, 0, 1},   {1, 2, 0, 1}
-    };
-    for (auto& d : dirs) {
-        int nr = row + d.dr, nc = col + d.dc;
-        if (!ChessBoard::isValidPos(nr, nc)) continue;
-        if (!board_.getPiece(row + d.lr, col + d.lc).isEmpty()) continue;
-        ChessPiece target = board_.getPiece(nr, nc);
-        if (!target.isEmpty() && target.getColor() == board_.getPiece(row, col).getColor()) continue;
-        moves.append(Move(row, col, nr, nc));
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getChariotMoves(int row, int col) const {
-    QVector<Move> moves;
-    PieceColor color = board_.getPiece(row, col).getColor();
-    int dr[] = {-1, 1, 0, 0};
-    int dc[] = {0, 0, -1, 1};
-    for (int dir = 0; dir < 4; ++dir) {
-        int nr = row + dr[dir], nc = col + dc[dir];
-        while (ChessBoard::isValidPos(nr, nc)) {
-            ChessPiece target = board_.getPiece(nr, nc);
-            if (target.isEmpty()) {
-                moves.append(Move(row, col, nr, nc));
-            } else {
-                if (target.getColor() != color) moves.append(Move(row, col, nr, nc));
-                break;
-            }
-            nr += dr[dir]; nc += dc[dir];
-        }
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getCannonMoves(int row, int col) const {
-    QVector<Move> moves;
-    PieceColor color = board_.getPiece(row, col).getColor();
-    int dr[] = {-1, 1, 0, 0};
-    int dc[] = {0, 0, -1, 1};
-    for (int dir = 0; dir < 4; ++dir) {
-        int nr = row + dr[dir], nc = col + dc[dir];
-        bool jumped = false;
-        while (ChessBoard::isValidPos(nr, nc)) {
-            ChessPiece target = board_.getPiece(nr, nc);
-            if (!jumped) {
-                if (target.isEmpty()) {
-                    moves.append(Move(row, col, nr, nc));
-                } else {
-                    jumped = true;
-                }
-            } else {
-                if (!target.isEmpty()) {
-                    if (target.getColor() != color) moves.append(Move(row, col, nr, nc));
-                    break;
-                }
-            }
-            nr += dr[dir]; nc += dc[dir];
-        }
-    }
-    return moves;
-}
-
-QVector<Move> ChessGame::getSoldierMoves(int row, int col) const {
-    QVector<Move> moves;
-    PieceColor color = board_.getPiece(row, col).getColor();
-
-    if (color == PieceColor::Red) {
-        int nr = row - 1;
-        if (ChessBoard::isValidPos(nr, col)) {
-            ChessPiece t = board_.getPiece(nr, col);
-            if (t.isEmpty() || t.getColor() != color)
-                moves.append(Move(row, col, nr, col));
-        }
-        if (row <= 4) {
-            for (int dc = -1; dc <= 1; dc += 2) {
-                int nc = col + dc;
-                if (ChessBoard::isValidPos(row, nc)) {
-                    ChessPiece t = board_.getPiece(row, nc);
-                    if (t.isEmpty() || t.getColor() != color)
-                        moves.append(Move(row, col, row, nc));
-                }
-            }
-        }
-    } else {
-        int nr = row + 1;
-        if (ChessBoard::isValidPos(nr, col)) {
-            ChessPiece t = board_.getPiece(nr, col);
-            if (t.isEmpty() || t.getColor() != color)
-                moves.append(Move(row, col, nr, col));
-        }
-        if (row >= 5) {
-            for (int dc = -1; dc <= 1; dc += 2) {
-                int nc = col + dc;
-                if (ChessBoard::isValidPos(row, nc)) {
-                    ChessPiece t = board_.getPiece(row, nc);
-                    if (t.isEmpty() || t.getColor() != color)
-                        moves.append(Move(row, col, row, nc));
-                }
-            }
-        }
-    }
-    return moves;
+    return getPseudoLegalMovesAt(board_, row, col);
 }
 
 // ==================== legality checking ====================
@@ -246,7 +51,7 @@ QVector<Move> ChessGame::getPseudoLegalMovesAt(const ChessBoard& b, int row, int
             }
         }
         PieceColor enemyColor = (piece.getColor()==PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
-        QPoint enemyGen = findGeneral(b, enemyColor);
+        QPoint enemyGen = b.findGeneral(enemyColor);
         if (enemyGen.x() >= 0 && col == enemyGen.y()) {
             if (countPiecesBetween(b, row, col, enemyGen.x(), enemyGen.y()) == 0) {
                 moves.append(Move(row, col, enemyGen.x(), enemyGen.y()));
@@ -381,11 +186,11 @@ bool ChessGame::isMoveSafe(const Move& move) const {
 bool ChessGame::wouldBeInCheckAfterMove(const Move& move, PieceColor color) const {
     ChessBoard tempBoard = board_;
     tempBoard.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
-    QPoint genPos = findGeneral(tempBoard, color);
+    QPoint genPos = tempBoard.findGeneral(color);
     if (genPos.x() < 0) return true;
 
     // 检查将帅是否面对面（飞将）
-    QPoint enemyGen = findGeneral(tempBoard, (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red);
+    QPoint enemyGen = tempBoard.findGeneral((color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red);
     if (enemyGen.x() >= 0 && genPos.y() == enemyGen.y()) {
         if (countPiecesBetween(tempBoard, genPos.x(), genPos.y(), enemyGen.x(), enemyGen.y()) == 0) {
             return true;
@@ -409,8 +214,8 @@ bool ChessGame::wouldBeInCheckAfterMove(const Move& move, PieceColor color) cons
 }
 
 bool ChessGame::generalsFacingEachOther() const {
-    QPoint redG = findGeneral(board_, PieceColor::Red);
-    QPoint blackG = findGeneral(board_, PieceColor::Black);
+    QPoint redG = board_.findGeneral(PieceColor::Red);
+    QPoint blackG = board_.findGeneral(PieceColor::Black);
     if (redG.x()<0 || blackG.x()<0) return false;
     if (redG.y() != blackG.y()) return false;
     return countPiecesBetween(board_, redG.x(), redG.y(), blackG.x(), blackG.y()) == 0;
@@ -432,20 +237,8 @@ int ChessGame::countPiecesBetween(const ChessBoard& b, int r1, int c1, int r2, i
     return count;
 }
 
-QPoint ChessGame::findGeneral(const ChessBoard& b, PieceColor color) const {
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            auto p = b.getPiece(r, c);
-            if (p.getType() == PieceType::General && p.getColor() == color) {
-                return QPoint(r, c);
-            }
-        }
-    }
-    return QPoint(-1, -1);
-}
-
 bool ChessGame::isInCheck(PieceColor color) const {
-    QPoint genPos = findGeneral(board_, color);
+    QPoint genPos = board_.findGeneral(color);
     if (genPos.x() < 0) return false;
 
     PieceColor enemyColor = (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
@@ -477,8 +270,8 @@ bool ChessGame::isGameOver() {
     if (gameOver_) return true;
 
     // 检查将/帅是否被吃
-    QPoint redG = findGeneral(board_, PieceColor::Red);
-    QPoint blackG = findGeneral(board_, PieceColor::Black);
+    QPoint redG = board_.findGeneral(PieceColor::Red);
+    QPoint blackG = board_.findGeneral(PieceColor::Black);
     if (redG.x() < 0) {
         winner_ = PieceColor::Black;
         gameOver_ = true;

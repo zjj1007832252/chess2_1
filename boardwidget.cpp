@@ -249,16 +249,7 @@ void BoardWidget::drawCheckIndicator(QPainter& painter) {
     if (!game_->isInCheck(game_->getCurrentTurn())) return;
 
     auto turn = game_->getCurrentTurn();
-    QPoint genPos(-1, -1);
-    const auto& board = game_->getBoard();
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            auto p = board.getPiece(r, c);
-            if (p.getType() == PieceType::General && p.getColor() == turn) {
-                genPos = QPoint(r, c);
-            }
-        }
-    }
+    QPoint genPos = game_->getBoard().findGeneral(turn);
 
     if (genPos.x() < 0) return;
     QPoint center = rowColToPixel(genPos.x(), genPos.y());

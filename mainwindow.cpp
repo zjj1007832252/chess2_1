@@ -14,12 +14,13 @@
 #include <QPushButton>
 #include <QLabel>
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent), game_(new ChessGame()), stacked_(new QStackedWidget(this)), ai_(nullptr),
-      aiColor_(PieceColor::Black), aiThinking_(false), aiDepth_(3), mode_(MainMenu) {
+    : QMainWindow(parent), game_(new ChessGame()), stacked_(new QStackedWidget(this)),
+      aiThread_(new AIThread(this)), aiColor_(PieceColor::Black), aiDepth_(3), mode_(MainMenu) {
     setCentralWidget(stacked_);
     setWindowTitle("中国象棋");
     setMinimumSize(600, 680);
 
+    connect(aiThread_, &AIThread::resultReady, this, &MainWindow::onAiResult);
 
     stacked_->addWidget(createMainMenu());
     stacked_->addWidget(createGameUI());
@@ -28,7 +29,6 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow() {
     delete game_;
-    delete ai_;
 }
 
 QWidget* MainWindow::createMainMenu() {
@@ -133,8 +133,6 @@ QWidget* MainWindow::createMainMenu() {
 void MainWindow::onLocalPlay() {
     mode_ = LocalTwoPlayer;
     game_->init();
-    delete ai_;
-    ai_ = nullptr;
     stacked_->setCurrentIndex(1);
     boardWidget_->selected_ = {-1, -1};
     boardWidget_->legalMoves_.clear();
@@ -262,9 +260,6 @@ void MainWindow::onAiPlay() {
 void MainWindow::startAiGame() {
     mode_ = PlayerVsAI;
     game_->init();
-    delete ai_;
-    ai_ = new AI(aiColor_);
-    ai_->setDepth(aiDepth_);
     stacked_->setCurrentIndex(1);
     boardWidget_->selected_ = {-1, -1};
     boardWidget_->legalMoves_.clear();
@@ -373,7 +368,7 @@ void MainWindow::updateStatus() {
         statusLabel_->setText("");
     }
 
-    if (mode_ == PlayerVsAI && ai_) {
+    if (mode_ == PlayerVsAI) {
         if (turn == aiColor_) {
             statusLabel_->setText("AI思考中...");
             statusLabel_->setStyleSheet("color: #666; padding: 5px 10px;");
@@ -403,27 +398,29 @@ void MainWindow::onMoveMade(const Move& move) {
         return;
     }
 
-    // AI模式：AI走棋
-    if (mode_ == PlayerVsAI && ai_ && !game_->isGameOver()) {
-        if (game_->getCurrentTurn() == aiColor_) {
-            onAiThink();
-        }
+    // AI模式：轮到AI时启动后台计算
+    if (mode_ == PlayerVsAI && game_->getCurrentTurn() == aiColor_) {
+        onAiThink();
     }
 }
 
 void MainWindow::onAiThink() {
-    if (!ai_ || game_->isGameOver()) return;
+    if (game_->isGameOver()) return;
     if (game_->getCurrentTurn() != aiColor_) return;
 
-    aiThinking_ = true;
     statusLabel_->setText("AI思考中...");
+    statusLabel_->setStyleSheet("color: #666; padding: 5px 10px;");
     boardWidget_->setEnabled(false);
 
-    Move aiMove = ai_->getBestMove(*game_);
-    aiThinking_ = false;
+    // 发送到后台线程计算
+    emit aiThread_->requestMove(*game_, aiColor_, aiDepth_);
+}
+
+void MainWindow::onAiResult(const Move& aiMove) {
     boardWidget_->setEnabled(true);
 
     if (!aiMove.isValid()) {
+        updateStatus();
         return;
     }
 
@@ -438,14 +435,10 @@ void MainWindow::onAiThink() {
     if (game_->isGameOver()) {
         PieceColor winner = game_->getWinner();
         QString msg;
-        if (mode_ == PlayerVsAI) {
-            if (winner == aiColor_) {
-                msg = "AI获胜！";
-            } else {
-                msg = "恭喜你，你赢了！";
-            }
+        if (winner == aiColor_) {
+            msg = "AI获胜！";
         } else {
-            msg = (winner == PieceColor::Red) ? "红方获胜！" : "黑方获胜！";
+            msg = "恭喜你，你赢了！";
         }
         statusLabel_->setText(msg);
         QMessageBox::information(this, "游戏结束", msg);
@@ -454,11 +447,6 @@ void MainWindow::onAiThink() {
 
 void MainWindow::onNewGame() {
     game_->reset();
-    if (mode_ == PlayerVsAI && ai_) {
-        delete ai_;
-        ai_ = new AI(aiColor_);
-        ai_->setDepth(aiDepth_);
-    }
     boardWidget_->selected_ = {-1, -1};
     boardWidget_->legalMoves_.clear();
     boardWidget_->lastMoveFrom = {-1, -1};
@@ -475,10 +463,15 @@ void MainWindow::onUndo() {
     auto history = game_->getMoveHistory();
     if (history.isEmpty()) return;
 
+    // AI模式下先取消正在进行的AI计算
+    if (mode_ == PlayerVsAI) {
+        boardWidget_->setEnabled(true);
+    }
+
     if (mode_ == LocalTwoPlayer) {
         // 双人模式：撤销一步
         game_->undoMove();
-    } else if (mode_ == PlayerVsAI && ai_) {
+    } else if (mode_ == PlayerVsAI) {
         // AI模式：撤销两步（玩家一步 + AI一步）
         if (history.size() >= 2) {
             game_->undoMove();

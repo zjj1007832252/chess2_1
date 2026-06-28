@@ -26,23 +26,11 @@ public:
     // 清空指定位置
     void clearPiece(int row, int col);
 
-    // 交换两个位置
-    void swapPieces(int r1, int c1, int r2, int c2);
-
     // 检查坐标是否在棋盘内
     static bool isValidPos(int row, int col);
 
-    // 获取红方帅的位置
-    QPoint getRedGeneralPos() const;
-
-    // 获取黑方将的位置
-    QPoint getBlackGeneralPos() const;
-
-    // 获取棋盘副本
-    ChessBoard clone() const;
-
-    // 恢复棋盘状态
-    void restore(const ChessBoard& other);
+    // 查找指定颜色的将/帅位置，未找到返回 (-1,-1)
+    QPoint findGeneral(PieceColor color) const;
 
 private:
     QVector<QVector<ChessPiece>> board_; // board_[row][col]

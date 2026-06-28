@@ -37,6 +37,7 @@ set(XIANGQI_HEADERS
     chesspiece.h
     chessgame.h
     ai.h
+    aiworker.h
     mainwindow.h
     boardwidget.h
 )
