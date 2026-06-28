@@ -1,0 +1,51 @@
+# ===== 构建产物 =====
+build/
+out/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CMakeUserPresets.json
+compile_commands.json
+
+# ===== 编译输出 =====
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+# windeployqt 部署的运行时文件
+Qt6*.dll
+d3dcompiler*.dll
+opengl32sw.dll
+platforms/
+styles/
+iconengines/
+imageformats/
+translations/
+translations/
+
+# ===== qmake 残留 =====
+.qmake.stash
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# ===== 日志与临时文件 =====
+*.log
+debug_log.txt
+debug_output.txt
+err.txt
+out.txt
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
