@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "chessgame.h"
 #include <QVector>
 
@@ -22,9 +22,6 @@ private:
 
     // Minimax with alpha-beta pruning
     int minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing);
-
-    // 生成所有合法走法
-    QVector<Move> generateAllLegalMoves(const ChessGame& game) const;
 
     // 走法排序（提高剪枝效率）
     void sortMoves(QVector<Move>& moves, const ChessBoard& board) const;

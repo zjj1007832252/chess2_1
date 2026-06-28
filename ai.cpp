@@ -5,7 +5,7 @@
 AI::AI(PieceColor color) : aiColor_(color), depth_(3) {}
 
 Move AI::getBestMove(ChessGame& game) {
-    auto moves = generateAllLegalMoves(game);
+    auto moves = game.getAllLegalMoves();
     if (moves.isEmpty()) return Move();
 
     bool isCheck = game.isInCheck(aiColor_);
@@ -17,7 +17,7 @@ Move AI::getBestMove(ChessGame& game) {
     int bestScore = INT_MIN;
 
     for (auto& move : moves) {
-        game.makeMove(move);
+        if (!game.makeMove(move)) continue;
         int score = minimax(game, effectiveDepth - 1, INT_MIN, INT_MAX, false);
         game.undoMove();
 
@@ -35,7 +35,7 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
         return evaluate(game.getBoard());
     }
 
-    auto moves = generateAllLegalMoves(game);
+    auto moves = game.getAllLegalMoves();
     if (moves.isEmpty()) {
         if (maximizing) return -100000 + depth;
         else return 100000 - depth;
@@ -46,7 +46,7 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
     if (maximizing) {
         int maxEval = INT_MIN;
         for (auto& move : moves) {
-            game.makeMove(move);
+            if (!game.makeMove(move)) continue;
             int eval = minimax(game, depth - 1, alpha, beta, false);
             game.undoMove();
             maxEval = qMax(maxEval, eval);
@@ -57,7 +57,7 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
     } else {
         int minEval = INT_MAX;
         for (auto& move : moves) {
-            game.makeMove(move);
+            if (!game.makeMove(move)) continue;
             int eval = minimax(game, depth - 1, alpha, beta, true);
             game.undoMove();
             minEval = qMin(minEval, eval);
@@ -66,59 +66,6 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
         }
         return minEval;
     }
-}
-
-QVector<Move> AI::generateAllLegalMoves(const ChessGame& game) const {
-    QVector<Move> legalMoves;
-    const auto& board = game.getBoard();
-    PieceColor turnColor = game.getCurrentTurn();
-
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            auto p = board.getPiece(r, c);
-            if (p.isEmpty() || p.getColor() != turnColor) continue;
-
-            auto pseudoMoves = game.getPseudoLegalMovesAt(board, r, c);
-            for (auto& m : pseudoMoves) {
-                ChessBoard tempBoard = board;
-                tempBoard.movePiece(m.fromRow, m.fromCol, m.toRow, m.toCol);
-
-                QPoint myGen(-1, -1);
-                for (int rr = 0; rr < 10; ++rr) {
-                    for (int cc = 0; cc < 9; ++cc) {
-                        auto pp = tempBoard.getPiece(rr, cc);
-                        if (pp.getType() == PieceType::General && pp.getColor() == turnColor) {
-                            myGen = QPoint(rr, cc);
-                        }
-                    }
-                }
-                if (myGen.x() < 0) continue;
-
-                PieceColor enemyColor = (turnColor == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
-                bool safe = true;
-                for (int er = 0; er < 10 && safe; ++er) {
-                    for (int ec = 0; ec < 9 && safe; ++ec) {
-                        auto ep = tempBoard.getPiece(er, ec);
-                        if (ep.isEmpty() || ep.getColor() != enemyColor) continue;
-
-                        auto eMoves = game.getPseudoLegalMovesAt(tempBoard, er, ec);
-                        for (auto& em : eMoves) {
-                            if (em.toRow == myGen.x() && em.toCol == myGen.y()) {
-                                safe = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (safe) {
-                    legalMoves.append(m);
-                }
-            }
-        }
-    }
-
-    return legalMoves;
 }
 
 void AI::sortMoves(QVector<Move>& moves, const ChessBoard& board) const {

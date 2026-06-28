@@ -245,6 +245,13 @@ QVector<Move> ChessGame::getPseudoLegalMovesAt(const ChessBoard& b, int row, int
                 moves.append(Move(row,col,nr,nc));
             }
         }
+        PieceColor enemyColor = (piece.getColor()==PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
+        QPoint enemyGen = findGeneral(b, enemyColor);
+        if (enemyGen.x() >= 0 && col == enemyGen.y()) {
+            if (countPiecesBetween(b, row, col, enemyGen.x(), enemyGen.y()) == 0) {
+                moves.append(Move(row, col, enemyGen.x(), enemyGen.y()));
+            }
+        }
         break;
     }
     case PieceType::Advisor: {
@@ -483,13 +490,15 @@ bool ChessGame::isGameOver() {
         return true;
     }
 
+    // 将帅面对面：刚走棋的一方判负
     if (generalsFacingEachOther()) {
-        winner_ = currentTurn_;
+        PieceColor lastMover = (currentTurn_ == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
+        winner_ = lastMover;
         gameOver_ = true;
         return true;
     }
 
-    // checkmate_check
+    // 将杀检测
     PieceColor savedTurn = currentTurn_;
     for (auto c : {PieceColor::Red, PieceColor::Black}) {
         currentTurn_ = c;
