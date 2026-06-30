@@ -184,33 +184,45 @@ bool ChessGame::isMoveSafe(const Move& move) const {
 }
 
 bool ChessGame::wouldBeInCheckAfterMove(const Move& move, PieceColor color) const {
-    ChessBoard tempBoard = board_;
-    tempBoard.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
-    QPoint genPos = tempBoard.findGeneral(color);
-    if (genPos.x() < 0) return true;
+    // Probe pattern: temporarily mutate, evaluate, restore. const-correct.
+    return probeMove(move, [&](const ChessBoard& b) -> bool {
+        // 将帅面对面（飞将）
+        QPoint genPos = b.findGeneral(color);
+        if (genPos.x() < 0) return true;
 
-    // 检查将帅是否面对面（飞将）
-    QPoint enemyGen = tempBoard.findGeneral((color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red);
-    if (enemyGen.x() >= 0 && genPos.y() == enemyGen.y()) {
-        if (countPiecesBetween(tempBoard, genPos.x(), genPos.y(), enemyGen.x(), enemyGen.y()) == 0) {
-            return true;
+        QPoint enemyGen = b.findGeneral(
+            (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red);
+        if (enemyGen.x() >= 0 && genPos.y() == enemyGen.y()) {
+            if (countPiecesBetween(b, genPos.x(), genPos.y(), enemyGen.x(), enemyGen.y()) == 0) {
+                return true;
+            }
         }
-    }
 
-    PieceColor enemyColor = (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
-    for (int r = 0; r < 10; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            auto p = tempBoard.getPiece(r, c);
-            if (p.isEmpty() || p.getColor() != enemyColor) continue;
-            auto pmoves = getPseudoLegalMovesAt(tempBoard, r, c);
-            for (auto& m : pmoves) {
-                if (m.toRow == genPos.x() && m.toCol == genPos.y()) {
-                    return true;
+        // 是否有敌方棋子能吃到我方将/帅
+        PieceColor enemyColor = (color == PieceColor::Red) ? PieceColor::Black : PieceColor::Red;
+        for (int r = 0; r < 10; ++r) {
+            for (int c = 0; c < 9; ++c) {
+                auto p = b.getPiece(r, c);
+                if (p.isEmpty() || p.getColor() != enemyColor) continue;
+                auto pmoves = getPseudoLegalMovesAt(b, r, c);
+                for (auto& m : pmoves) {
+                    if (m.toRow == genPos.x() && m.toCol == genPos.y()) {
+                        return true;
+                    }
                 }
             }
         }
-    }
-    return false;
+        return false;
+    });
+}
+
+void ChessGame::applyMove(const Move& move) {
+    board_.movePiece(move.fromRow, move.fromCol, move.toRow, move.toCol);
+}
+
+void ChessGame::undoMove(const Move& move, const ChessPiece& captured) {
+    board_.movePiece(move.toRow, move.toCol, move.fromRow, move.fromCol);
+    board_.setPiece(move.toRow, move.toCol, captured);
 }
 
 bool ChessGame::generalsFacingEachOther() const {

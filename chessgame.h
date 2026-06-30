@@ -3,6 +3,8 @@
 #include <QVector>
 #include <QPoint>
 
+class AI;  // forward declaration for friend declaration
+
 struct Move {
     int fromRow, fromCol;
     int toRow, toCol;
@@ -24,6 +26,7 @@ struct RecordedMove {
 };
 
 class ChessGame {
+    friend class AI;  // AI uses applyMove/undoMove for zero-allocation search
 public:
     ChessGame();
     void init();
@@ -59,5 +62,27 @@ private:
 
     bool isMoveSafe(const Move& move) const;
     bool wouldBeInCheckAfterMove(const Move& move, PieceColor color) const;
+
+    // Efficient make/unmake for AI search — avoids full board copy. Non-const.
+    void applyMove(const Move& move);
+    void undoMove(const Move& move, const ChessPiece& captured);
+
+    // Internal: apply move in-place, run a predicate, undo. const-correct.
+    template<typename F>
+    bool probeMove(const Move& move, F&& predicate) const
+    {
+        auto& self = const_cast<ChessGame&>(*this);
+        const ChessPiece mover = board_.getPiece(move.fromRow, move.fromCol);
+        const ChessPiece captured = board_.getPiece(move.toRow, move.toCol);
+        self.board_.setPiece(move.toRow, move.toCol, mover);
+        self.board_.setPiece(move.fromRow, move.fromCol, ChessPiece());
+
+        bool result = predicate(board_);
+
+        self.board_.setPiece(move.fromRow, move.fromCol, mover);
+        self.board_.setPiece(move.toRow, move.toCol, captured);
+        return result;
+    }
+
     int countPiecesBetween(const ChessBoard& b, int r1, int c1, int r2, int c2) const;
 };

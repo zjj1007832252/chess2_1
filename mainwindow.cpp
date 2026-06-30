@@ -14,22 +14,22 @@
 #include <QPushButton>
 #include <QLabel>
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent), game_(new ChessGame()), stacked_(new QStackedWidget(this)),
-      aiThread_(new AIThread(this)), aiColor_(PieceColor::Black), aiDepth_(3), mode_(MainMenu) {
-    setCentralWidget(stacked_);
+    : QMainWindow(parent),
+      game_(std::make_unique<ChessGame>()),
+      stacked_(std::make_unique<QStackedWidget>()),
+      aiThread_(std::make_unique<AIThread>()) {
+    setCentralWidget(stacked_.get());
     setWindowTitle("中国象棋");
     setMinimumSize(600, 680);
 
-    connect(aiThread_, &AIThread::resultReady, this, &MainWindow::onAiResult);
+    connect(aiThread_.get(), &AIThread::resultReady, this, &MainWindow::onAiResult);
 
     stacked_->addWidget(createMainMenu());
     stacked_->addWidget(createGameUI());
     stacked_->setCurrentIndex(0);
 }
 
-MainWindow::~MainWindow() {
-    delete game_;
-}
+MainWindow::~MainWindow() = default;
 
 QWidget* MainWindow::createMainMenu() {
     auto* page = new QWidget();
@@ -340,7 +340,7 @@ QWidget* MainWindow::createGameUI() {
     layout->addLayout(topBar);
 
     // 棋盘
-    boardWidget_ = new BoardWidget(game_, this);
+    boardWidget_ = new BoardWidget(game_.get(), this);
     boardWidget_->setMinimumSize(560, 620);
     layout->addWidget(boardWidget_);
 

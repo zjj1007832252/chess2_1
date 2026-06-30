@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QMessageBox>
+#include <memory>
 #include "chessgame.h"
 #include "boardwidget.h"
 #include "aiworker.h"
@@ -14,7 +15,7 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 private slots:
     void onLocalPlay();
@@ -32,17 +33,17 @@ private:
     void updateStatus();
     void startAiGame();
 
-    ChessGame* game_;
-    BoardWidget* boardWidget_;
-    QStackedWidget* stacked_;
+    std::unique_ptr<ChessGame> game_;
+    BoardWidget* boardWidget_ = nullptr;   // parented via setCentralWidget → stacked_
+    std::unique_ptr<QStackedWidget> stacked_;
 
-    AIThread* aiThread_;
-    PieceColor aiColor_;
-    int aiDepth_;
+    std::unique_ptr<AIThread> aiThread_;
+    PieceColor aiColor_ = PieceColor::Black;
+    int aiDepth_ = 3;
 
     enum GameMode { MainMenu, LocalTwoPlayer, PlayerVsAI };
-    GameMode mode_;
+    GameMode mode_ = MainMenu;
 
-    QLabel* statusLabel_;
-    QLabel* turnLabel_;
+    QLabel* statusLabel_ = nullptr;        // parented via createGameUI layout
+    QLabel* turnLabel_ = nullptr;          // parented via createGameUI layout
 };

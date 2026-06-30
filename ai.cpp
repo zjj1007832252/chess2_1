@@ -17,9 +17,10 @@ Move AI::getBestMove(ChessGame& game) {
     int bestScore = INT_MIN;
 
     for (auto& move : moves) {
-        if (!game.makeMove(move)) continue;
+        const ChessPiece captured = game.getBoard().getPiece(move.toRow, move.toCol);
+        game.applyMove(move);
         int score = minimax(game, effectiveDepth - 1, INT_MIN, INT_MAX, false);
-        game.undoMove();
+        game.undoMove(move, captured);
 
         if (score > bestScore) {
             bestScore = score;
@@ -46,9 +47,10 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
     if (maximizing) {
         int maxEval = INT_MIN;
         for (auto& move : moves) {
-            if (!game.makeMove(move)) continue;
+            const ChessPiece captured = game.getBoard().getPiece(move.toRow, move.toCol);
+            game.applyMove(move);
             int eval = minimax(game, depth - 1, alpha, beta, false);
-            game.undoMove();
+            game.undoMove(move, captured);
             maxEval = qMax(maxEval, eval);
             alpha = qMax(alpha, eval);
             if (beta <= alpha) break;
@@ -57,9 +59,10 @@ int AI::minimax(ChessGame& game, int depth, int alpha, int beta, bool maximizing
     } else {
         int minEval = INT_MAX;
         for (auto& move : moves) {
-            if (!game.makeMove(move)) continue;
+            const ChessPiece captured = game.getBoard().getPiece(move.toRow, move.toCol);
+            game.applyMove(move);
             int eval = minimax(game, depth - 1, alpha, beta, true);
-            game.undoMove();
+            game.undoMove(move, captured);
             minEval = qMin(minEval, eval);
             beta = qMin(beta, eval);
             if (beta <= alpha) break;
